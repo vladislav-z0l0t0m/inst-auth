@@ -15,11 +15,7 @@ export class OAuthService {
     ipAddress: string,
     userAgent: string
   ): Promise<LoginResponse> {
-    const user = await this.userApiService.handleOAuthLogin({
-      email: oauthPayload.email,
-      provider: oauthPayload.provider,
-      name: oauthPayload.name,
-    });
+    const user = await this.userApiService.handleOAuthLogin(oauthPayload);
 
     if (!user) {
       throw new Error("Failed to process OAuth login");
