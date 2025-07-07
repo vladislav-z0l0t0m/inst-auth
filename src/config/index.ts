@@ -1,92 +1,65 @@
-interface Config {
+import { z } from "zod";
+
+const configSchema = z.object({
   // Server
-  port: number;
-  nodeEnv: string;
+  port: z.coerce.number().min(1).max(65535),
+  nodeEnv: z.enum(["development", "production", "test"]),
 
   // Database
-  mongodbUri: string;
+  mongodbUri: z.string().url("Invalid MongoDB URI"),
 
   // JWT
-  jwtSecret: string;
-  jwtRefreshSecret: string;
-  jwtExpiresIn: string;
-  jwtRefreshExpiresIn: string;
+  jwtSecret: z.string(),
+  jwtRefreshSecret: z.string(),
+  jwtExpiresIn: z.string(),
+  jwtRefreshExpiresIn: z.string(),
 
   // Session
-  sessionSecret: string;
+  sessionSecret: z.string(),
 
   // External services
-  mainAppUrl: string;
+  mainAppUrl: z.string().url("Invalid main app URL"),
 
   // OAuth - Google
-  googleClientId: string;
-  googleClientSecret: string;
-  googleCallbackUrl: string;
+  googleClientId: z.string(),
+  googleClientSecret: z.string(),
+  googleCallbackUrl: z.string().url("Invalid Google callback URL"),
 
   // OAuth - Facebook
-  facebookAppId: string;
-  facebookAppSecret: string;
-  facebookCallbackUrl: string;
-}
+  facebookAppId: z.string(),
+  facebookAppSecret: z.string(),
+  facebookCallbackUrl: z.string().url("Invalid Facebook callback URL"),
+});
+
+type Config = z.infer<typeof configSchema>;
 
 function validateConfig(): Config {
-  const requiredEnvVars = [
-    "AUTH_PORT",
-    "MONGODB_URI",
-    "JWT_SECRET",
-    "JWT_REFRESH_SECRET",
-    "JWT_EXPIRES_IN",
-    "JWT_REFRESH_EXPIRES_IN",
-    "SESSION_SECRET",
-    "MAIN_APP_URL",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "GOOGLE_CALLBACK_URL",
-    "FACEBOOK_APP_ID",
-    "FACEBOOK_APP_SECRET",
-    "FACEBOOK_CALLBACK_URL",
-  ];
+  const result = configSchema.safeParse({
+    port: process.env.AUTH_PORT,
+    nodeEnv: process.env.NODE_ENV,
+    mongodbUri: process.env.MONGODB_URI,
+    jwtSecret: process.env.JWT_SECRET,
+    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN,
+    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    sessionSecret: process.env.SESSION_SECRET,
+    mainAppUrl: process.env.MAIN_APP_URL,
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL,
+    facebookAppId: process.env.FACEBOOK_APP_ID,
+    facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
+    facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL,
+  });
 
-  const missingVars = requiredEnvVars.filter(
-    (varName) => !process.env[varName]
-  );
-
-  if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missingVars.join(", ")}`
-    );
+  if (!result.success) {
+    const errorDetails = result.error.errors
+      .map((err) => `${err.path.join(".")}: ${err.message}`)
+      .join("\n");
+    throw new Error(`Configuration validation failed:\n${errorDetails}`);
   }
 
-  return {
-    // Server
-    port: parseInt(process.env.AUTH_PORT!, 10),
-    nodeEnv: process.env.NODE_ENV || "development",
-
-    // Database
-    mongodbUri: process.env.MONGODB_URI!,
-
-    // JWT
-    jwtSecret: process.env.JWT_SECRET!,
-    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET!,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN!,
-    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN!,
-
-    // Session
-    sessionSecret: process.env.SESSION_SECRET!,
-
-    // External services
-    mainAppUrl: process.env.MAIN_APP_URL!,
-
-    // OAuth - Google
-    googleClientId: process.env.GOOGLE_CLIENT_ID!,
-    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL!,
-
-    // OAuth - Facebook
-    facebookAppId: process.env.FACEBOOK_APP_ID!,
-    facebookAppSecret: process.env.FACEBOOK_APP_SECRET!,
-    facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL!,
-  };
+  return result.data;
 }
 
 export const config = validateConfig();
