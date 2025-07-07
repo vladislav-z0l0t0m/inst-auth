@@ -13,6 +13,7 @@ import {
   getClientIP,
   getUserAgent,
 } from "../utils/request.utils";
+import { REFRESH_TOKEN_EXPIRES_IN_MS } from "../constants/time";
 
 export function createAuthRoutes(
   userApiService: UserApiService,
@@ -66,7 +67,7 @@ export function createAuthRoutes(
         token: refreshTokenValue,
         ipAddress: getClientIP(req),
         userAgent: getUserAgent(req),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
       const response: LoginResponse = {
@@ -135,7 +136,7 @@ export function createAuthRoutes(
         token: refreshTokenValue,
         ipAddress: getClientIP(req),
         userAgent: getUserAgent(req),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
       const response: LoginResponse = {
@@ -200,7 +201,7 @@ export function createAuthRoutes(
         token: newRefreshTokenValue,
         ipAddress: getClientIP(req),
         userAgent: getUserAgent(req),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
       const response: LoginResponse = {

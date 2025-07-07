@@ -2,6 +2,7 @@ import { UserApiService } from "./user-api.service";
 import { JwtService } from "./jwt.service";
 import { RefreshTokenService } from "./refresh-token.service";
 import { OAuthUserPayload, LoginResponse } from "../types";
+import { REFRESH_TOKEN_EXPIRES_IN_MS } from "../constants/time";
 
 export class OAuthService {
   constructor(
@@ -40,7 +41,7 @@ export class OAuthService {
       token: refreshTokenValue,
       ipAddress,
       userAgent,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
     });
 
     return {
