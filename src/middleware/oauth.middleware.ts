@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { OAuthUserPayload } from "../types";
 import { isOAuthUserPayload } from "../utils/passport.utils";
 
-// Middleware для проверки OAuth аутентификации
 export function requireOAuthUser(
   req: Request,
   res: Response,
@@ -19,7 +18,6 @@ export function requireOAuthUser(
   next();
 }
 
-// Типизированный middleware для обработки OAuth запросов
 export function withOAuthUser<T>(
   handler: (req: Request, res: Response, user: OAuthUserPayload) => Promise<T>
 ) {

@@ -8,7 +8,6 @@ export class UserApiService {
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
 
-    // Создаем axios instance с настройками
     this.axiosInstance = axios.create({
       baseURL: this.baseUrl,
       timeout: 10000,

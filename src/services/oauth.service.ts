@@ -15,7 +15,6 @@ export class OAuthService {
     ipAddress: string,
     userAgent: string
   ): Promise<LoginResponse> {
-    // Send data to main app for user creation/lookup
     const user = await this.userApiService.handleOAuthLogin({
       email: oauthPayload.email,
       provider: oauthPayload.provider,
@@ -26,7 +25,6 @@ export class OAuthService {
       throw new Error("Failed to process OAuth login");
     }
 
-    // Generate tokens
     const accessToken = this.jwtService.generateAccessToken({
       userId: user.id,
     });
@@ -37,7 +35,6 @@ export class OAuthService {
       tokenId: refreshTokenValue,
     });
 
-    // Store refresh token in MongoDB
     await this.refreshTokenService.createToken({
       userId: user.id,
       token: refreshTokenValue,

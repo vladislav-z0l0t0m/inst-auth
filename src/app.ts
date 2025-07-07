@@ -63,10 +63,8 @@ export class App {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
 
-    // Swagger documentation
     this.app.use("/docs", swaggerMiddleware, swaggerSetup);
 
-    // Session middleware
     this.app.use(
       session({
         secret: config.sessionSecret,
@@ -82,7 +80,6 @@ export class App {
   }
 
   private setupPassport() {
-    // Type-safe passport serialization
     passport.serializeUser((user, done) => {
       const serializedUser = serializeOAuthUser(user);
       if (serializedUser) {
@@ -101,18 +98,15 @@ export class App {
       }
     });
 
-    // Initialize OAuth strategies
     GoogleStrategy.initialize();
     FacebookStrategy.initialize();
   }
 
   private setupRoutes() {
-    // Health check
     this.app.get("/health", (req, res) => {
       res.status(200).json({ status: "ok" });
     });
 
-    // Auth routes
     this.app.use(
       "/",
       createAuthRoutes(
@@ -123,12 +117,10 @@ export class App {
       )
     );
 
-    // OAuth routes
     this.app.use("/", createOAuthRoutes(this.oauthService));
   }
 
   private setupErrorHandling() {
-    // Error handling middleware
     this.app.use(
       (
         error: any,

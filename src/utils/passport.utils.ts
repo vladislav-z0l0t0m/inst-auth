@@ -1,6 +1,5 @@
 import { OAuthUserPayload } from "../types";
 
-// Type guard function
 export function isOAuthUserPayload(user: unknown): user is OAuthUserPayload {
   return (
     user !== null &&
@@ -11,7 +10,6 @@ export function isOAuthUserPayload(user: unknown): user is OAuthUserPayload {
   );
 }
 
-// Safe serialization function
 export function serializeOAuthUser(user: unknown): OAuthUserPayload | null {
   if (isOAuthUserPayload(user)) {
     return {
@@ -25,7 +23,6 @@ export function serializeOAuthUser(user: unknown): OAuthUserPayload | null {
   return null;
 }
 
-// Safe deserialization function
 export function deserializeOAuthUser(
   sessionData: unknown
 ): OAuthUserPayload | null {

@@ -22,7 +22,6 @@ export function createAuthRoutes(
 ) {
   const router = Router();
 
-  // Login route
   router.post("/login", async (req, res) => {
     try {
       const { identifier, identifierType, password } = req.body;
@@ -34,7 +33,6 @@ export function createAuthRoutes(
         });
       }
 
-      // Validate identifierType
       if (!["email", "phone", "username"].includes(identifierType)) {
         return res.status(400).json({
           message: "Invalid identifierType. Must be email, phone, or username",
@@ -87,7 +85,6 @@ export function createAuthRoutes(
     }
   });
 
-  // OAuth manual route
   router.post("/oauth", async (req, res) => {
     try {
       const { email, provider, name } = req.body;
@@ -98,14 +95,12 @@ export function createAuthRoutes(
         });
       }
 
-      // Validate provider
       if (!["google", "facebook"].includes(provider)) {
         return res.status(400).json({
           message: "Invalid provider. Must be google or facebook",
         });
       }
 
-      // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         return res.status(400).json({
@@ -159,7 +154,6 @@ export function createAuthRoutes(
     }
   });
 
-  // Refresh token route
   router.post("/refresh", async (req, res) => {
     try {
       const { refreshToken }: RefreshTokenRequest = req.body;
@@ -225,7 +219,6 @@ export function createAuthRoutes(
     }
   });
 
-  // Logout route
   router.post("/logout", requireAuth, async (req, res) => {
     try {
       const { refreshToken }: RefreshTokenRequest = req.body;
@@ -236,10 +229,8 @@ export function createAuthRoutes(
         });
       }
 
-      // Проверяем и получаем payload из refresh token
       const payload = jwtService.verifyRefreshToken(refreshToken);
 
-      // Отзываем refresh token по его ID
       const success = await refreshTokenService.revokeToken(payload.tokenId);
 
       if (!success) {
@@ -254,7 +245,6 @@ export function createAuthRoutes(
     }
   });
 
-  // Logout all devices route
   router.post("/logout-all", requireAuth, async (req, res) => {
     try {
       const { refreshToken }: RefreshTokenRequest = req.body;
@@ -265,10 +255,8 @@ export function createAuthRoutes(
         });
       }
 
-      // Получаем userId из refresh token
       const payload = jwtService.verifyRefreshToken(refreshToken);
 
-      // Отзываем все refresh tokens пользователя
       const revokedCount = await refreshTokenService.revokeAllUserTokens(
         payload.userId
       );

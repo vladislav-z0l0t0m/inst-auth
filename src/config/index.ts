@@ -1,31 +1,24 @@
 import { z } from "zod";
 
 const configSchema = z.object({
-  // Server
   port: z.coerce.number().min(1).max(65535),
   nodeEnv: z.enum(["development", "production", "test"]),
 
-  // Database
   mongodbUri: z.string().url("Invalid MongoDB URI"),
 
-  // JWT
   jwtSecret: z.string(),
   jwtRefreshSecret: z.string(),
   jwtExpiresIn: z.string(),
   jwtRefreshExpiresIn: z.string(),
 
-  // Session
   sessionSecret: z.string(),
 
-  // External services
   mainAppUrl: z.string().url("Invalid main app URL"),
 
-  // OAuth - Google
   googleClientId: z.string(),
   googleClientSecret: z.string(),
   googleCallbackUrl: z.string().url("Invalid Google callback URL"),
 
-  // OAuth - Facebook
   facebookAppId: z.string(),
   facebookAppSecret: z.string(),
   facebookCallbackUrl: z.string().url("Invalid Facebook callback URL"),

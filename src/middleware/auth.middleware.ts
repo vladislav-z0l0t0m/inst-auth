@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { getAuthenticatedUser } from "../utils/request.utils";
 import { ExpressUser } from "../types";
 
-// Middleware для проверки аутентификации
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const user = getAuthenticatedUser(req);
   if (!user) {
@@ -11,7 +10,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-// Типизированный middleware для обработки аутентифицированных запросов
 export function withAuthenticatedUser<T>(
   handler: (req: Request, res: Response, user: ExpressUser) => Promise<T>
 ) {

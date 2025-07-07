@@ -8,7 +8,6 @@ import { getClientIP, getUserAgent } from "../utils/request.utils";
 export function createOAuthRoutes(oauthService: OAuthService) {
   const router = Router();
 
-  // Google OAuth routes
   router.get(
     "/google",
     passport.authenticate("google", { scope: ["email", "profile"] })
@@ -34,7 +33,6 @@ export function createOAuthRoutes(oauthService: OAuthService) {
     })
   );
 
-  // Facebook OAuth routes
   router.get(
     "/facebook",
     passport.authenticate("facebook", { scope: ["email", "public_profile"] })

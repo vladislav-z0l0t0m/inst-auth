@@ -1,4 +1,3 @@
-// User interface
 export interface User {
   id: number;
   username: string;
@@ -9,21 +8,18 @@ export interface User {
   updatedAt: string;
 }
 
-// Authentication request
 export interface AuthenticateRequest {
   identifier: string;
   identifierType: "email" | "phone" | "username";
   password: string;
 }
 
-// OAuth request
 export interface OAuthRequest {
   email: string;
   provider: "google" | "facebook";
   name?: string;
 }
 
-// OAuth user payload union type
 export interface GoogleUserPayload {
   provider: "google";
   email: string;
@@ -42,7 +38,6 @@ export interface FacebookUserPayload {
 
 export type OAuthUserPayload = GoogleUserPayload | FacebookUserPayload;
 
-// Login response
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -66,7 +61,6 @@ export interface RefreshTokenPayload {
   tokenId: string;
 }
 
-// Express user interface for passport
 export interface ExpressUser {
   id: number;
   email: string;

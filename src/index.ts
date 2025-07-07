@@ -2,20 +2,16 @@ import dotenv from "dotenv";
 import { App } from "./app";
 import { config } from "./config";
 
-// Load environment variables
 dotenv.config();
 
-// Create and initialize app
 const app = new App();
 
-// Graceful shutdown
 process.on("SIGINT", async () => {
   console.log("Shutting down gracefully...");
   await app.close();
   process.exit(0);
 });
 
-// Start server
 async function startServer() {
   try {
     await app.initialize();
