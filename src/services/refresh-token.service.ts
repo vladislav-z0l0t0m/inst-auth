@@ -25,6 +25,8 @@ export class RefreshTokenService {
       updatedAt: new Date(),
     };
 
+    // NOTE: we can use save instead. requires: npm install mongoose,
+    //   and rewrite some files +-7, +-200-300 lines
     const result = await this.collection.insertOne(token);
     return { ...token, _id: result.insertedId.toString() };
   }
