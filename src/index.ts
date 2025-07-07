@@ -20,7 +20,7 @@ async function startServer() {
   try {
     await app.initialize();
 
-    app.app.listen(config.port, () => {
+    app.listen(config.port, () => {
       console.log(`Auth service is running on port ${config.port}`);
     });
   } catch (error) {

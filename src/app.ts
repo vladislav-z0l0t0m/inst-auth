@@ -145,6 +145,10 @@ export class App {
     );
   }
 
+  public listen(port: number, callback?: () => void) {
+    return this.app.listen(port, callback);
+  }
+
   async close() {
     if (this.mongoClient) {
       await this.mongoClient.close();
