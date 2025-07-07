@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { getAuthenticatedUser } from "../utils/request.utils";
-import { OAuthUserPayload } from "../types";
+import { ExpressUser } from "../types";
 
 // Middleware для проверки аутентификации
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
@@ -13,7 +13,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 // Типизированный middleware для обработки аутентифицированных запросов
 export function withAuthenticatedUser<T>(
-  handler: (req: Request, res: Response, user: OAuthUserPayload) => Promise<T>
+  handler: (req: Request, res: Response, user: ExpressUser) => Promise<T>
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {

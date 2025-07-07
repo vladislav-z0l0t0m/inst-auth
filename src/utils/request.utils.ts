@@ -1,10 +1,10 @@
 import { Request } from "express";
-import { OAuthUserPayload } from "../types";
+import { ExpressUser } from "../types";
 
 // Безопасное извлечение пользователя из запроса
-export function getAuthenticatedUser(req: Request): OAuthUserPayload | null {
+export function getAuthenticatedUser(req: Request): ExpressUser | null {
   if (req.user !== undefined && req.user !== null) {
-    return req.user as OAuthUserPayload;
+    return req.user as ExpressUser;
   }
   return null;
 }

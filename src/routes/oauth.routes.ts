@@ -2,7 +2,7 @@ import { Router } from "express";
 import passport from "passport";
 import { OAuthUserPayload } from "../types";
 import { OAuthService } from "../services/oauth.service";
-import { withAuthenticatedUser } from "../middleware/auth.middleware";
+import { withOAuthUser } from "../middleware/oauth.middleware";
 import { getClientIP, getUserAgent } from "../utils/request.utils";
 
 export function createOAuthRoutes(oauthService: OAuthService) {
@@ -17,7 +17,7 @@ export function createOAuthRoutes(oauthService: OAuthService) {
   router.get(
     "/google/callback",
     passport.authenticate("google", { failureRedirect: "/login" }),
-    withAuthenticatedUser(async (req, res, user: OAuthUserPayload) => {
+    withOAuthUser(async (req, res, user: OAuthUserPayload) => {
       try {
         const response = await oauthService.handleOAuthLogin(
           user,
@@ -43,7 +43,7 @@ export function createOAuthRoutes(oauthService: OAuthService) {
   router.get(
     "/facebook/callback",
     passport.authenticate("facebook", { failureRedirect: "/login" }),
-    withAuthenticatedUser(async (req, res, user: OAuthUserPayload) => {
+    withOAuthUser(async (req, res, user: OAuthUserPayload) => {
       try {
         const response = await oauthService.handleOAuthLogin(
           user,

@@ -15,6 +15,7 @@ import {
 } from "./utils/passport.utils";
 import { GoogleStrategy } from "./strategies/google.strategy";
 import { FacebookStrategy } from "./strategies/facebook.strategy";
+import { createJwtMiddleware } from "./middleware/jwt.middleware";
 import { config } from "./config";
 
 export class App {
@@ -77,6 +78,7 @@ export class App {
 
     this.app.use(passport.initialize());
     this.app.use(passport.session());
+    this.app.use(createJwtMiddleware(this.jwtService, this.userApiService));
   }
 
   private setupPassport() {
