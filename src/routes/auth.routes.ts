@@ -246,29 +246,5 @@ export function createAuthRoutes(
     }
   });
 
-  router.post("/logout-all", requireAuth, async (req, res) => {
-    try {
-      const { refreshToken }: RefreshTokenRequest = req.body;
-
-      if (!refreshToken) {
-        return res.status(400).json({
-          message: "Missing refresh token",
-        });
-      }
-
-      const payload = jwtService.verifyRefreshToken(refreshToken);
-
-      const revokedCount = await refreshTokenService.revokeAllUserTokens(
-        payload.userId
-      );
-
-      res.json({
-        message: `Logged out from all devices successfully. ${revokedCount} tokens revoked.`,
-      });
-    } catch (error) {
-      res.status(400).json({ message: "Invalid refresh token" });
-    }
-  });
-
   return router;
 }

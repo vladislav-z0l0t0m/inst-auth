@@ -8,7 +8,9 @@ import { JwtService } from "./services/jwt.service";
 import { OAuthService } from "./services/oauth.service";
 import { swaggerMiddleware, swaggerSetup } from "./swagger";
 import { createAuthRoutes } from "./routes/auth.routes";
+import { createInternalRoutes } from "./routes/internal.routes";
 import { createOAuthRoutes } from "./routes/oauth.routes";
+import { createAdminRoutes } from "./routes/admin.routes";
 import {
   serializeOAuthUser,
   deserializeOAuthUser,
@@ -114,7 +116,13 @@ export class App {
       )
     );
 
+    this.app.use("/", createInternalRoutes(this.refreshTokenService));
+
     this.app.use("/", createOAuthRoutes(this.oauthService));
+
+    if (config.nodeEnv !== "production") {
+      this.app.use("/", createAdminRoutes(this.refreshTokenService));
+    }
   }
 
   private setupErrorHandling() {

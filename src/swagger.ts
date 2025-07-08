@@ -232,6 +232,92 @@ export const swaggerSetup = swaggerUi.setup({
         },
       },
     },
+    "/admin/tokens": {
+      delete: {
+        summary: "Revoke all tokens for all users (Admin only)",
+        tags: ["Admin"],
+        description:
+          "Available only in non-production environments. Requires Bearer token authentication.",
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: {
+            description: "All tokens revoked successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Successfully revoked 150 tokens for all users",
+                      description:
+                        "Success message or 'No active tokens found for any user' if no tokens were revoked",
+                    },
+                    revokedCount: {
+                      type: "number",
+                      example: 150,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          500: {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
+    "/admin/tokens/{userId}": {
+      delete: {
+        summary: "Revoke all tokens for specific user (Admin only)",
+        tags: ["Admin"],
+        description:
+          "Available only in non-production environments. Requires Bearer token authentication.",
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            description: "User ID",
+          },
+        ],
+        responses: {
+          200: {
+            description: "User tokens revoked successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Successfully revoked 5 tokens for user 123",
+                      description:
+                        "Success message or 'No active tokens found for user {userId}' if no tokens were revoked",
+                    },
+                    revokedCount: {
+                      type: "number",
+                      example: 5,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: {
+            description: "Invalid userId parameter",
+          },
+          500: {
+            description: "Internal server error",
+          },
+        },
+      },
+    },
     "/oauth": {
       post: {
         summary: "Manual OAuth login",

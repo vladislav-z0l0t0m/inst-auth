@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { User, AuthenticateRequest, OAuthRequest } from "../types";
+import { config } from "../config";
 
 export class UserApiService {
   private baseUrl: string;
@@ -20,8 +21,13 @@ export class UserApiService {
   async authenticateUser(request: AuthenticateRequest): Promise<User | null> {
     try {
       const response = await this.axiosInstance.post(
-        `/user/auth/authenticate`,
-        request
+        `/internal/auth/authenticate`,
+        request,
+        {
+          headers: {
+            "x-internal-api-key": config.internalApiKey,
+          },
+        }
       );
       return response.data;
     } catch (error: unknown) {
@@ -38,8 +44,13 @@ export class UserApiService {
   async handleOAuthLogin(request: OAuthRequest): Promise<User | null> {
     try {
       const response = await this.axiosInstance.post(
-        `/user/auth/oauth`,
-        request
+        `/internal/auth/oauth`,
+        request,
+        {
+          headers: {
+            "x-internal-api-key": config.internalApiKey,
+          },
+        }
       );
       return response.data;
     } catch (error: unknown) {

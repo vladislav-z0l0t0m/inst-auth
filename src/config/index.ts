@@ -22,6 +22,8 @@ const configSchema = z.object({
   facebookAppId: z.string(),
   facebookAppSecret: z.string(),
   facebookCallbackUrl: z.string().url("Invalid Facebook callback URL"),
+
+  internalApiKey: z.string(),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -43,6 +45,7 @@ function validateConfig(): Config {
     facebookAppId: process.env.FACEBOOK_APP_ID,
     facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
     facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL,
+    internalApiKey: process.env.INTERNAL_API_KEY,
   });
 
   if (!result.success) {

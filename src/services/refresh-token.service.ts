@@ -13,10 +13,8 @@ export class RefreshTokenService {
       userId: data.userId,
       token: data.token,
       userAgent: data.userAgent,
-      isRevoked: false,
       expiresAt: data.expiresAt,
       createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     return await token.save();
@@ -25,15 +23,6 @@ export class RefreshTokenService {
   async findByToken(token: string): Promise<RefreshTokenDocument | null> {
     return await RefreshTokenModel.findOne({
       token,
-      isRevoked: false,
-      expiresAt: { $gt: new Date() },
-    });
-  }
-
-  async findByUserId(userId: number): Promise<RefreshTokenDocument[]> {
-    return await RefreshTokenModel.find({
-      userId,
-      isRevoked: false,
       expiresAt: { $gt: new Date() },
     });
   }
@@ -43,8 +32,7 @@ export class RefreshTokenService {
       { token },
       {
         $set: {
-          isRevoked: true,
-          updatedAt: new Date(),
+          expiresAt: new Date(),
         },
       }
     );
@@ -53,29 +41,26 @@ export class RefreshTokenService {
 
   async revokeAllUserTokens(userId: number): Promise<number> {
     const result = await RefreshTokenModel.updateMany(
-      { userId, isRevoked: false },
+      { userId, expiresAt: { $gt: new Date() } },
       {
         $set: {
-          isRevoked: true,
-          updatedAt: new Date(),
+          expiresAt: new Date(),
         },
       }
     );
     return result.modifiedCount;
   }
 
-  async cleanupExpiredTokens(): Promise<number> {
-    const result = await RefreshTokenModel.deleteMany({
-      expiresAt: { $lt: new Date() },
-    });
-    return result.deletedCount;
-  }
-
-  async cleanupRevokedTokens(): Promise<number> {
-    const result = await RefreshTokenModel.deleteMany({
-      isRevoked: true,
-    });
-    return result.deletedCount;
+  async revokeAllTokens(): Promise<number> {
+    const result = await RefreshTokenModel.updateMany(
+      { expiresAt: { $gt: new Date() } },
+      {
+        $set: {
+          expiresAt: new Date(),
+        },
+      }
+    );
+    return result.modifiedCount;
   }
 
   generateRefreshToken(): string {
