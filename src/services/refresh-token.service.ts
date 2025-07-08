@@ -1,21 +1,15 @@
-import { MongoClient, Db, Collection } from "mongodb";
 import {
-  RefreshToken,
+  RefreshTokenModel,
+  RefreshTokenDocument,
   CreateRefreshTokenDto,
 } from "../models/refresh-token.model";
 import crypto from "crypto";
 
 export class RefreshTokenService {
-  private db: Db;
-  private collection: Collection<RefreshToken>;
-
-  constructor(mongoClient: MongoClient) {
-    this.db = mongoClient.db("auth_service");
-    this.collection = this.db.collection<RefreshToken>("refresh_tokens");
-  }
-
-  async createToken(data: CreateRefreshTokenDto): Promise<RefreshToken> {
-    const token: RefreshToken = {
+  async createToken(
+    data: CreateRefreshTokenDto
+  ): Promise<RefreshTokenDocument> {
+    const token = new RefreshTokenModel({
       userId: data.userId,
       token: data.token,
       userAgent: data.userAgent,
@@ -23,34 +17,29 @@ export class RefreshTokenService {
       expiresAt: data.expiresAt,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    });
 
-    // NOTE: we can use save instead. requires: npm install mongoose,
-    //   and rewrite some files +-7, +-200-300 lines
-    const result = await this.collection.insertOne(token);
-    return { ...token, _id: result.insertedId.toString() };
+    return await token.save();
   }
 
-  async findByToken(token: string): Promise<RefreshToken | null> {
-    return await this.collection.findOne({
+  async findByToken(token: string): Promise<RefreshTokenDocument | null> {
+    return await RefreshTokenModel.findOne({
       token,
       isRevoked: false,
       expiresAt: { $gt: new Date() },
     });
   }
 
-  async findByUserId(userId: number): Promise<RefreshToken[]> {
-    return await this.collection
-      .find({
-        userId,
-        isRevoked: false,
-        expiresAt: { $gt: new Date() },
-      })
-      .toArray();
+  async findByUserId(userId: number): Promise<RefreshTokenDocument[]> {
+    return await RefreshTokenModel.find({
+      userId,
+      isRevoked: false,
+      expiresAt: { $gt: new Date() },
+    });
   }
 
   async revokeToken(token: string): Promise<boolean> {
-    const result = await this.collection.updateOne(
+    const result = await RefreshTokenModel.updateOne(
       { token },
       {
         $set: {
@@ -63,7 +52,7 @@ export class RefreshTokenService {
   }
 
   async revokeAllUserTokens(userId: number): Promise<number> {
-    const result = await this.collection.updateMany(
+    const result = await RefreshTokenModel.updateMany(
       { userId, isRevoked: false },
       {
         $set: {
@@ -76,20 +65,20 @@ export class RefreshTokenService {
   }
 
   async cleanupExpiredTokens(): Promise<number> {
-    const result = await this.collection.deleteMany({
+    const result = await RefreshTokenModel.deleteMany({
       expiresAt: { $lt: new Date() },
+    });
+    return result.deletedCount;
+  }
+
+  async cleanupRevokedTokens(): Promise<number> {
+    const result = await RefreshTokenModel.deleteMany({
+      isRevoked: true,
     });
     return result.deletedCount;
   }
 
   generateRefreshToken(): string {
     return crypto.randomBytes(64).toString("hex");
-  }
-
-  async initializeIndexes(): Promise<void> {
-    await this.collection.createIndex({ token: 1 }, { unique: true });
-    await this.collection.createIndex({ userId: 1 });
-    await this.collection.createIndex({ expiresAt: 1 });
-    await this.collection.createIndex({ isRevoked: 1 });
   }
 }

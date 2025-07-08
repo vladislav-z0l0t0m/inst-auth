@@ -1,7 +1,7 @@
 import express from "express";
 import session from "express-session";
 import passport from "passport";
-import { MongoClient } from "mongodb";
+import mongoose from "mongoose";
 import { UserApiService } from "./services/user-api.service";
 import { RefreshTokenService } from "./services/refresh-token.service";
 import { JwtService } from "./services/jwt.service";
@@ -20,7 +20,6 @@ import { config } from "./config";
 
 export class App {
   public app: express.Application;
-  public mongoClient!: MongoClient;
   public userApiService: UserApiService;
   public jwtService: JwtService;
   public refreshTokenService!: RefreshTokenService;
@@ -42,11 +41,9 @@ export class App {
 
   private async initializeMongoDB() {
     try {
-      this.mongoClient = new MongoClient(config.mongodbUri);
-      await this.mongoClient.connect();
+      await mongoose.connect(config.mongodbUri);
 
-      this.refreshTokenService = new RefreshTokenService(this.mongoClient);
-      await this.refreshTokenService.initializeIndexes();
+      this.refreshTokenService = new RefreshTokenService();
 
       this.oauthService = new OAuthService(
         this.userApiService,
@@ -142,8 +139,8 @@ export class App {
   }
 
   async close() {
-    if (this.mongoClient) {
-      await this.mongoClient.close();
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
     }
   }
 }
