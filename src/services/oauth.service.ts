@@ -43,11 +43,7 @@ export class OAuthService {
     return {
       accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-      },
+      user,
     };
   }
 }
