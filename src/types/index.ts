@@ -14,6 +14,13 @@ export interface AuthenticateRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+  phone?: string;
+}
+
 export interface OAuthRequest {
   email: string;
   provider: "google" | "facebook";
@@ -45,6 +52,7 @@ export interface LoginResponse {
     id: number;
     email: string;
     username: string;
+    phone?: string;
   };
 }
 

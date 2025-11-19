@@ -1,5 +1,10 @@
 import axios, { AxiosInstance } from "axios";
-import { User, AuthenticateRequest, OAuthRequest } from "../types";
+import {
+  User,
+  AuthenticateRequest,
+  OAuthRequest,
+  RegisterRequest,
+} from "../types";
 import { config } from "../config";
 
 export class UserApiService {
@@ -33,7 +38,9 @@ export class UserApiService {
     } catch (error: unknown) {
       if (
         axios.isAxiosError(error) &&
-        (error.response?.status === 400 || error.response?.status === 404)
+        (error.response?.status === 400 ||
+          error.response?.status === 401 ||
+          error.response?.status === 404)
       ) {
         return null;
       }
@@ -67,6 +74,29 @@ export class UserApiService {
       return response.data;
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async registerUser(request: RegisterRequest): Promise<User | null> {
+    try {
+      const response = await this.axiosInstance.post(
+        `/internal/auth/register`,
+        request,
+        {
+          headers: {
+            "x-internal-api-key": config.internalApiKey,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.status === 400 || error.response?.status === 409)
+      ) {
         return null;
       }
       throw error;

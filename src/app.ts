@@ -19,6 +19,7 @@ import { GoogleStrategy } from "./strategies/google.strategy";
 import { FacebookStrategy } from "./strategies/facebook.strategy";
 import { createJwtMiddleware } from "./middleware/jwt.middleware";
 import { config } from "./config";
+import cors from "cors";
 
 export class App {
   public app: express.Application;
@@ -59,6 +60,13 @@ export class App {
   }
 
   private setupMiddleware() {
+    this.app.use(
+      cors({
+        origin: "*",
+        credentials: true,
+      })
+    );
+
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
 
