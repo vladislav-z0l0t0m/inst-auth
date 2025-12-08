@@ -1,8 +1,15 @@
 import { z } from "zod";
 
+// Enum для NODE_ENV - используем везде вместо строк
+export enum NodeEnv {
+  DEVELOPMENT = "development",
+  PRODUCTION = "production",
+  TEST = "test",
+}
+
 const configSchema = z.object({
   port: z.coerce.number().min(1).max(65535),
-  nodeEnv: z.enum(["development", "production", "test"]),
+  nodeEnv: z.enum([NodeEnv.DEVELOPMENT, NodeEnv.PRODUCTION, NodeEnv.TEST]),
 
   mongodbUri: z.string().url("Invalid MongoDB URI"),
 
@@ -24,6 +31,8 @@ const configSchema = z.object({
   facebookCallbackUrl: z.string().url("Invalid Facebook callback URL"),
 
   internalApiKey: z.string(),
+
+  frontendUrl: z.string().url("Invalid frontend URL"),
 });
 
 type Config = z.infer<typeof configSchema>;
@@ -46,6 +55,7 @@ function validateConfig(): Config {
     facebookAppSecret: process.env.FACEBOOK_APP_SECRET,
     facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL,
     internalApiKey: process.env.INTERNAL_API_KEY,
+    frontendUrl: process.env.FRONTEND_URL,
   });
 
   if (!result.success) {

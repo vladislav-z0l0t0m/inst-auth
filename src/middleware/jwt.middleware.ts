@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { JwtService } from "../services/jwt.service";
 import { UserApiService } from "../services/user-api.service";
+import { COOKIE_NAMES } from "../utils/cookie.utils";
 
 export function createJwtMiddleware(
   jwtService: JwtService,
@@ -8,13 +9,16 @@ export function createJwtMiddleware(
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const authHeader = req.headers.authorization;
+      let token: string | undefined;
 
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return next();
+      token = req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
+
+      if (!token) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.substring(7);
+        }
       }
-
-      const token = authHeader.substring(7);
 
       if (!token) {
         return next();

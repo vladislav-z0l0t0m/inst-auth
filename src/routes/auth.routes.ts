@@ -7,6 +7,11 @@ import { OAuthService } from "../services/oauth.service";
 import { requireAuth } from "../middleware/auth.middleware";
 import { getClientIP, getUserAgent } from "../utils/request.utils";
 import { REFRESH_TOKEN_EXPIRES_IN_MS } from "../constants/time";
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  COOKIE_NAMES,
+} from "../utils/cookie.utils";
 
 export function createAuthRoutes(
   userApiService: UserApiService,
@@ -86,9 +91,8 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken,
-        refreshToken,
+      setAuthCookies(res, accessToken, refreshToken);
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -150,9 +154,9 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken,
-        refreshToken,
+      setAuthCookies(res, accessToken, refreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -220,9 +224,9 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken,
-        refreshToken,
+      setAuthCookies(res, accessToken, refreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -239,7 +243,7 @@ export function createAuthRoutes(
 
   router.post("/refresh", async (req, res) => {
     try {
-      const { refreshToken }: RefreshTokenRequest = req.body;
+      const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
       if (!refreshToken) {
         return res.status(400).json({
@@ -286,9 +290,9 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
+      setAuthCookies(res, newAccessToken, newRefreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -305,27 +309,20 @@ export function createAuthRoutes(
 
   router.post("/logout", requireAuth, async (req, res) => {
     try {
-      const { refreshToken }: RefreshTokenRequest = req.body;
+      const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
-      if (!refreshToken) {
-        return res.status(400).json({
-          message: "Missing refresh token",
-        });
+      if (refreshToken) {
+        try {
+          const payload = jwtService.verifyRefreshToken(refreshToken);
+          await refreshTokenService.revokeToken(payload.tokenId);
+        } catch (error) {}
       }
 
-      const payload = jwtService.verifyRefreshToken(refreshToken);
-
-      const success = await refreshTokenService.revokeToken(payload.tokenId);
-
-      if (!success) {
-        return res.status(400).json({
-          message: "Token already revoked or invalid",
-        });
-      }
+      clearAuthCookies(res);
 
       res.json({ message: "Logged out successfully" });
     } catch (error) {
-      res.status(400).json({ message: "Invalid refresh token" });
+      res.status(400).json({ message: "Logout failed" });
     }
   });
 
