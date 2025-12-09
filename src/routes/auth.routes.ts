@@ -1,19 +1,24 @@
 import { Router } from "express";
-import { LoginResponse, RefreshTokenRequest, OAuthUserPayload } from "../types";
 import { UserApiService } from "../services/user-api.service";
 import { JwtService } from "../services/jwt.service";
 import { RefreshTokenService } from "../services/refresh-token.service";
 import { OAuthService } from "../services/oauth.service";
-import {
-  requireAuth,
-  withAuthenticatedUser,
-} from "../middleware/auth.middleware";
-import {
-  getAuthenticatedUser,
-  getClientIP,
-  getUserAgent,
-} from "../utils/request.utils";
+import { requireAuth } from "../middleware/auth.middleware";
+import { getClientIP, getUserAgent } from "../utils/request.utils";
 import { REFRESH_TOKEN_EXPIRES_IN_MS } from "../constants/time";
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  COOKIE_NAMES,
+} from "../utils/cookie.utils";
+import {
+  loginSchema,
+  oauthSchema,
+  registerSchema,
+  RegisterInput,
+  LoginInput,
+  OAuthInput,
+} from "./auth.schemas";
 
 export function createAuthRoutes(
   userApiService: UserApiService,
@@ -23,22 +28,80 @@ export function createAuthRoutes(
 ) {
   const router = Router();
 
-  router.post("/login", async (req, res) => {
+  router.post("/register", async (req, res) => {
     try {
-      const { identifier, identifierType, password } = req.body;
-
-      if (!identifier || !identifierType || !password) {
+      const parseResult = registerSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
           message:
-            "Missing required fields: identifier, identifierType, password",
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for register",
         });
       }
 
-      if (!["email", "phone", "username"].includes(identifierType)) {
-        return res.status(400).json({
-          message: "Invalid identifierType. Must be email, phone, or username",
+      const { email, username, password, phone }: RegisterInput =
+        parseResult.data;
+
+      const user = await userApiService.registerUser({
+        email,
+        username,
+        password,
+        phone,
+      });
+
+      if (!user) {
+        return res.status(409).json({
+          message: "User with this email or username already exists",
         });
       }
+
+      const accessToken = jwtService.generateAccessToken({
+        userId: user.id,
+      });
+
+      const refreshTokenValue = refreshTokenService.generateRefreshToken();
+      const refreshToken = jwtService.generateRefreshToken({
+        userId: user.id,
+        tokenId: refreshTokenValue,
+      });
+
+      await refreshTokenService.createToken({
+        userId: user.id,
+        token: refreshTokenValue,
+        ipAddress: getClientIP(req),
+        userAgent: getUserAgent(req),
+        expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
+      });
+
+      setAuthCookies(res, accessToken, refreshToken);
+      const response = {
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          phone: user.phone,
+        },
+      };
+
+      res.status(201).json(response);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  router.post("/login", async (req, res) => {
+    try {
+      const parseResult = loginSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({
+          message:
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for login",
+        });
+      }
+
+      const { identifier, identifierType, password }: LoginInput =
+        parseResult.data;
 
       const user = await userApiService.authenticateUser({
         identifier,
@@ -70,13 +133,14 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken,
-        refreshToken,
+      setAuthCookies(res, accessToken, refreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
           username: user.username,
+          phone: user.phone,
         },
       };
 
@@ -88,26 +152,16 @@ export function createAuthRoutes(
 
   router.post("/oauth", async (req, res) => {
     try {
-      const { email, provider, name } = req.body;
-
-      if (!email || !provider) {
+      const parseResult = oauthSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
-          message: "Missing required fields: email, provider",
+          message:
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for oauth",
         });
       }
 
-      if (!["google", "facebook"].includes(provider)) {
-        return res.status(400).json({
-          message: "Invalid provider. Must be google or facebook",
-        });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          message: "Invalid email format",
-        });
-      }
+      const { email, provider, name }: OAuthInput = parseResult.data;
 
       const user = await userApiService.handleOAuthLogin({
         email,
@@ -139,13 +193,14 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken,
-        refreshToken,
+      setAuthCookies(res, accessToken, refreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
           username: user.username,
+          phone: user.phone,
         },
       };
 
@@ -157,7 +212,7 @@ export function createAuthRoutes(
 
   router.post("/refresh", async (req, res) => {
     try {
-      const { refreshToken }: RefreshTokenRequest = req.body;
+      const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
       if (!refreshToken) {
         return res.status(400).json({
@@ -204,13 +259,14 @@ export function createAuthRoutes(
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN_MS),
       });
 
-      const response: LoginResponse = {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
+      setAuthCookies(res, newAccessToken, newRefreshToken);
+
+      const response = {
         user: {
           id: user.id,
           email: user.email,
           username: user.username,
+          phone: user.phone,
         },
       };
 
@@ -222,27 +278,20 @@ export function createAuthRoutes(
 
   router.post("/logout", requireAuth, async (req, res) => {
     try {
-      const { refreshToken }: RefreshTokenRequest = req.body;
+      const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
-      if (!refreshToken) {
-        return res.status(400).json({
-          message: "Missing refresh token",
-        });
+      if (refreshToken) {
+        try {
+          const payload = jwtService.verifyRefreshToken(refreshToken);
+          await refreshTokenService.revokeToken(payload.tokenId);
+        } catch (error) {}
       }
 
-      const payload = jwtService.verifyRefreshToken(refreshToken);
-
-      const success = await refreshTokenService.revokeToken(payload.tokenId);
-
-      if (!success) {
-        return res.status(400).json({
-          message: "Token already revoked or invalid",
-        });
-      }
+      clearAuthCookies(res);
 
       res.json({ message: "Logged out successfully" });
     } catch (error) {
-      res.status(400).json({ message: "Invalid refresh token" });
+      res.status(400).json({ message: "Logout failed" });
     }
   });
 

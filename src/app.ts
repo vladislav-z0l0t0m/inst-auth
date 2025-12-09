@@ -2,6 +2,8 @@ import express from "express";
 import session from "express-session";
 import passport from "passport";
 import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import { UserApiService } from "./services/user-api.service";
 import { RefreshTokenService } from "./services/refresh-token.service";
 import { JwtService } from "./services/jwt.service";
@@ -59,8 +61,17 @@ export class App {
   }
 
   private setupMiddleware() {
+    this.app.use(
+      cors({
+        origin: config.frontendUrl,
+        credentials: true,
+      })
+    );
+
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+
+    this.app.use(cookieParser());
 
     this.app.use("/docs", swaggerMiddleware, swaggerSetup);
 
