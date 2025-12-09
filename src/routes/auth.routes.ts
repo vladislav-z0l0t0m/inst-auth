@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { LoginResponse, RefreshTokenRequest, RegisterRequest } from "../types";
 import { UserApiService } from "../services/user-api.service";
 import { JwtService } from "../services/jwt.service";
 import { RefreshTokenService } from "../services/refresh-token.service";
@@ -12,6 +11,14 @@ import {
   clearAuthCookies,
   COOKIE_NAMES,
 } from "../utils/cookie.utils";
+import {
+  loginSchema,
+  oauthSchema,
+  registerSchema,
+  RegisterInput,
+  LoginInput,
+  OAuthInput,
+} from "./auth.schemas";
 
 export function createAuthRoutes(
   userApiService: UserApiService,
@@ -23,42 +30,17 @@ export function createAuthRoutes(
 
   router.post("/register", async (req, res) => {
     try {
-      const { email, username, password, phone }: RegisterRequest = req.body;
-
-      if (!email || !username || !password) {
+      const parseResult = registerSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
-          message: "Missing required fields: email, username, password",
+          message:
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for register",
         });
       }
 
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          message: "Invalid email format",
-        });
-      }
-
-      if (phone) {
-        const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-        if (!phoneRegex.test(phone)) {
-          return res.status(400).json({
-            message:
-              "Invalid phone format. Use E.164 format (e.g., +1234567890)",
-          });
-        }
-      }
-
-      if (username.length < 3) {
-        return res.status(400).json({
-          message: "Username must be at least 3 characters long",
-        });
-      }
-
-      if (password.length < 6) {
-        return res.status(400).json({
-          message: "Password must be at least 6 characters long",
-        });
-      }
+      const { email, username, password, phone }: RegisterInput =
+        parseResult.data;
 
       const user = await userApiService.registerUser({
         email,
@@ -109,20 +91,17 @@ export function createAuthRoutes(
 
   router.post("/login", async (req, res) => {
     try {
-      const { identifier, identifierType, password } = req.body;
-
-      if (!identifier || !identifierType || !password) {
+      const parseResult = loginSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
           message:
-            "Missing required fields: identifier, identifierType, password",
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for login",
         });
       }
 
-      if (!["email", "phone", "username"].includes(identifierType)) {
-        return res.status(400).json({
-          message: "Invalid identifierType. Must be email, phone, or username",
-        });
-      }
+      const { identifier, identifierType, password }: LoginInput =
+        parseResult.data;
 
       const user = await userApiService.authenticateUser({
         identifier,
@@ -173,26 +152,16 @@ export function createAuthRoutes(
 
   router.post("/oauth", async (req, res) => {
     try {
-      const { email, provider, name } = req.body;
-
-      if (!email || !provider) {
+      const parseResult = oauthSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({
-          message: "Missing required fields: email, provider",
+          message:
+            parseResult.error.errors[0]?.message ||
+            "Invalid request payload for oauth",
         });
       }
 
-      if (!["google", "facebook"].includes(provider)) {
-        return res.status(400).json({
-          message: "Invalid provider. Must be google or facebook",
-        });
-      }
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json({
-          message: "Invalid email format",
-        });
-      }
+      const { email, provider, name }: OAuthInput = parseResult.data;
 
       const user = await userApiService.handleOAuthLogin({
         email,
